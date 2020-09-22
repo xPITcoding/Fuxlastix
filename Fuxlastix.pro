@@ -16,19 +16,19 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    alglib/src/alglibinternal.cpp \
-    alglib/src/alglibmisc.cpp \
-    alglib/src/ap.cpp \
-    alglib/src/dataanalysis.cpp \
-    alglib/src/diffequations.cpp \
-    alglib/src/fasttransforms.cpp \
-    alglib/src/integration.cpp \
-    alglib/src/interpolation.cpp \
-    alglib/src/linalg.cpp \
-    alglib/src/optimization.cpp \
-    alglib/src/solvers.cpp \
-    alglib/src/specialfunctions.cpp \
-    alglib/src/statistics.cpp \
+    ../../Fuxlastix/alglib/src/alglibinternal.cpp \
+    ../../Fuxlastix/alglib/src/alglibmisc.cpp \
+    ../../Fuxlastix/alglib/src/ap.cpp \
+    ../../Fuxlastix/alglib/src/dataanalysis.cpp \
+    ../../Fuxlastix/alglib/src/diffequations.cpp \
+    ../../Fuxlastix/alglib/src/fasttransforms.cpp \
+    ../../Fuxlastix/alglib/src/integration.cpp \
+    ../../Fuxlastix/alglib/src/interpolation.cpp \
+    ../../Fuxlastix/alglib/src/linalg.cpp \
+    ../../Fuxlastix/alglib/src/optimization.cpp \
+    ../../Fuxlastix/alglib/src/solvers.cpp \
+    ../../Fuxlastix/alglib/src/specialfunctions.cpp \
+    ../../Fuxlastix/alglib/src/statistics.cpp \
     colorcheck.cpp \
     foumel.cpp \
     gridcalc.cpp \
@@ -36,20 +36,20 @@ SOURCES += \
     fuxlastix.cpp
 
 HEADERS += \
-    alglib/src/alglibinternal.h \
-    alglib/src/alglibmisc.h \
-    alglib/src/ap.h \
-    alglib/src/dataanalysis.h \
-    alglib/src/diffequations.h \
-    alglib/src/fasttransforms.h \
-    alglib/src/integration.h \
-    alglib/src/interpolation.h \
-    alglib/src/linalg.h \
-    alglib/src/optimization.h \
-    alglib/src/solvers.h \
-    alglib/src/specialfunctions.h \
-    alglib/src/statistics.h \
-    alglib/src/stdafx.h \
+    ../../Fuxlastix/alglib/src/alglibinternal.h \
+    ../../Fuxlastix/alglib/src/alglibmisc.h \
+    ../../Fuxlastix/alglib/src/ap.h \
+    ../../Fuxlastix/alglib/src/dataanalysis.h \
+    ../../Fuxlastix/alglib/src/diffequations.h \
+    ../../Fuxlastix/alglib/src/fasttransforms.h \
+    ../../Fuxlastix/alglib/src/integration.h \
+    ../../Fuxlastix/alglib/src/interpolation.h \
+    ../../Fuxlastix/alglib/src/linalg.h \
+    ../../Fuxlastix/alglib/src/optimization.h \
+    ../../Fuxlastix/alglib/src/solvers.h \
+    ../../Fuxlastix/alglib/src/specialfunctions.h \
+    ../../Fuxlastix/alglib/src/statistics.h \
+    ../../Fuxlastix/alglib/src/stdafx.h \
     colorcheck.h \
     foumel.h \
     fuxlastix.h \

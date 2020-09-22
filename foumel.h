@@ -3,8 +3,8 @@
 
 #include <QDialog>
 #include <QMatrix3x3>
-#include "alglib/src/linalg.h"
-#include "alglib/src/fasttransforms.h"
+#include "../../Fuxlastix/alglib/src/linalg.h"
+#include "../../Fuxlastix/alglib/src/fasttransforms.h"
 
 using namespace alglib;
 
