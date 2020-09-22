@@ -4,7 +4,7 @@
 #include <QDialog>
 #include <QProcess>
 #include <QDir>
-
+#include "foumel.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class fuxlastix; }
@@ -17,8 +17,6 @@ enum dataType
     bit16,
     RGB24,
     bit8
-
-
 };
 
 
@@ -33,54 +31,42 @@ public:
     void saveSettings();
     void loadSettings();
     void rename(QString);
-private slots:
-    void on_pickFixedImageButton_clicked();
+    fouMel callFM;
 
-    void on_pickMovingImageButton_clicked();
 
-    void on_pickMovingColourButton_clicked();
 
-    void on_pickDirectoryButton_clicked();
 
-    void on_pickParameterFileButton_clicked();
-
-    void on_pushQuitButton_clicked();
-
-    void on_pushRunButton_clicked();
-
-    void outputSlot();
-
-    void fertigSlot();
-
-    void ganzfertigSlot();
-
-    QImage loadTIFFImage(const QString& fname);
-
-    QImage scale(QImage);
-
+public slots:
     QList<QImage> split(QImage);
 
-    void saveMHD(const QImage&, const QString&);
+    void saveMHDall (const QImage&, const QString&);
 
+
+
+
+private slots:
+    void on_pickFixedImageButton_clicked();
+    void on_pickMovingImageButton_clicked();
+    void on_pickDirectoryButton_clicked();
+    void on_pickParameterFileButton_clicked();
+    void on_pushQuitButton_clicked();
+    void on_pushRunButton_clicked();
+    void outputSlot();
+    void fertigSlot();
+    void ganzfertigSlot();
+    QImage loadTIFFImage(const QString& fname);
+    QImage scale(QImage);
     void change_nr(const QString&);
+    void run_transformix(const QString&);
+    QImage merge(QString&);
+    void copy_remove();
+    void on_pickTempButton_clicked();
+    void on_checkerButton_clicked();
+    void on_saveCheckerButton_clicked();
+    void on_gridButton_clicked();
+    QImage loadMHD (QString);
+    void doFourierMellin();
 
-   void run_transformix(const QString&);
-
-   QImage merge(QString&);
-
-   void saveMHDscaled(const QImage&, const QString&);
-
-   void saveMHDall (const QImage&, const QString&);
-
-   void copy_remove();
-
-   QImage makeCheck(QImage);
-
-   void on_pickTempButton_clicked();
-
-   void on_checkerButton_clicked();
-
-   void on_saveCheckerButton_clicked();
 
 signals:
     void MSG(const QString&);
@@ -91,10 +77,16 @@ private:
     QProcess *runTransformix = nullptr;
     dataType dt;
     QString temp = "";
+    QString resPath ="";
+
     int transformixCount = 0;
-    QImage check2;
-    QImage check1;
     QImage result2;
+    bool fouMelactive=false;
+    void dispPixie(QImage, int);
+public:
+    int fixFormat=-1;
+    int movFormat=-1;
+
 };
 #endif // FUXLASTIX_H
 

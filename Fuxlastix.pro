@@ -16,33 +16,62 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    alglib/src/alglibinternal.cpp \
+    alglib/src/alglibmisc.cpp \
+    alglib/src/ap.cpp \
+    alglib/src/dataanalysis.cpp \
+    alglib/src/diffequations.cpp \
+    alglib/src/fasttransforms.cpp \
+    alglib/src/integration.cpp \
+    alglib/src/interpolation.cpp \
+    alglib/src/linalg.cpp \
+    alglib/src/optimization.cpp \
+    alglib/src/solvers.cpp \
+    alglib/src/specialfunctions.cpp \
+    alglib/src/statistics.cpp \
+    colorcheck.cpp \
+    foumel.cpp \
+    gridcalc.cpp \
     main.cpp \
     fuxlastix.cpp
 
 HEADERS += \
-    fuxlastix.h
+    alglib/src/alglibinternal.h \
+    alglib/src/alglibmisc.h \
+    alglib/src/ap.h \
+    alglib/src/dataanalysis.h \
+    alglib/src/diffequations.h \
+    alglib/src/fasttransforms.h \
+    alglib/src/integration.h \
+    alglib/src/interpolation.h \
+    alglib/src/linalg.h \
+    alglib/src/optimization.h \
+    alglib/src/solvers.h \
+    alglib/src/specialfunctions.h \
+    alglib/src/statistics.h \
+    alglib/src/stdafx.h \
+    colorcheck.h \
+    foumel.h \
+    fuxlastix.h \
+    gridcalc.h
 
 FORMS += \
-    fuxlastix.ui
+    colorcheck.ui \
+    foumel.ui \
+    fuxlastix.ui \
+    gridcalc.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../Software/elastix_new/lib/release/ -lANNlib-5.0
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../Software/elastix_new/lib/debug/ -lANNlib-5.0
-else:unix: LIBS += -L$$PWD/../../Software/elastix_new/lib/ -lANNlib-5.0
-
-INCLUDEPATH += $$PWD/../../Software/elastix_new
-DEPENDPATH += $$PWD/../../Software/elastix_new
-
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/tiff-4.1.0/libtiff/.libs/release/ -ltiff
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/tiff-4.1.0/libtiff/.libs/debug/ -ltiff
-else:unix: LIBS += -L$$PWD/tiff-4.1.0/libtiff/.libs/ -ltiff
-
-INCLUDEPATH += $$PWD/tiff-4.1.0/libtiff
-DEPENDPATH += $$PWD/tiff-4.1.0/libtiff
-
 RESOURCES += \
     Fuxlastix.qrc
+
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../../../usr/local/lib/release/ -ltiff
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../../../usr/local/lib/debug/ -ltiff
+else:unix: LIBS += -L$$PWD/../../../../usr/local/lib/ -ltiff
+
+INCLUDEPATH += $$PWD/../../../../usr/local/include
+DEPENDPATH += $$PWD/../../../../usr/local/include

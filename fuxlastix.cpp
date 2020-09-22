@@ -15,6 +15,9 @@
 #include <iostream>
 #include <QThread>
 #include <QPainter>
+#include "gridcalc.h"
+#include "foumel.h"
+#include "colorcheck.h"
 
 fuxlastix::fuxlastix(QWidget *parent)
     : QDialog(parent)
@@ -29,6 +32,7 @@ fuxlastix::fuxlastix(QWidget *parent)
     connect(runTransformix,SIGNAL(finished(int,QProcess::ExitStatus)),this,SLOT(ganzfertigSlot()));
     loadSettings();
     temp=ui->lineTemp->text()+"/";
+    resPath=ui->lineOutputDir->text()+"/";
 
       //show logo fux
      QPixmap fox (":/img/fuxlastix_logo.png");
@@ -40,6 +44,7 @@ fuxlastix::fuxlastix(QWidget *parent)
     QPixmap xpit (":/img/logo.png");
     xpit = xpit.scaledToHeight(40);
     ui->xpitlabel->setPixmap(xpit);
+
 
 }
 
@@ -58,10 +63,12 @@ void fuxlastix::saveSettings()
 
         t << ui->lineFixedImage->text() << endl;
         t << ui->lineMovingImage->text() << endl;
-        t << ui->lineMovingColour->text() << endl;
         t << ui->lineOutputDir->text() << endl;
         t << ui->lineParameterFile->text() << endl;
         t << ui->lineTemp->text() << endl;
+        t << fixFormat << endl;
+        t << movFormat << endl;
+        t << fouMelactive << endl;
 
         f.close();
     }
@@ -77,7 +84,6 @@ void fuxlastix::loadSettings()
 
         ui->lineFixedImage->setText(t.readLine());
         ui->lineMovingImage->setText(t.readLine());
-        ui->lineMovingColour->setText(t.readLine());
         ui->lineOutputDir->setText(t.readLine());
         ui->lineParameterFile->setText(t.readLine());
         ui->lineTemp->setText(t.readLine());
@@ -103,14 +109,6 @@ void fuxlastix::on_pickMovingImageButton_clicked()
     }
 }
 
-void fuxlastix::on_pickMovingColourButton_clicked()
-{
-    QString s=QFileDialog::getOpenFileName(0,"Select colour image",ui->lineMovingColour->text());
-    if (!s.isEmpty())
-    {
-        ui->lineMovingColour->setText(s);
-    }
-}
 
 void fuxlastix::on_pickDirectoryButton_clicked()
 {
@@ -138,24 +136,40 @@ void fuxlastix::on_pushQuitButton_clicked()
 void fuxlastix::on_pushRunButton_clicked()
 {
     transformixCount=0;
+    if (ui->rotBox->isChecked())
+        fouMelactive=true;
     saveSettings();
     QImage fixedImage = loadTIFFImage(ui->lineFixedImage->text());
-    QImage movingImage =loadTIFFImage(ui->lineMovingImage->text());
-    check1 = fixedImage;
-    QPixmap fix;
+    saveMHDall(fixedImage, temp+"fixedImageOrg.raw");
+    fixFormat=fixedImage.format();
 
-    fix.convertFromImage(fixedImage);
-    if (fix.width()>fix.height())
-    fix=fix.scaledToWidth(500);
-    else
-    fix=fix.scaledToHeight(500);
-    ui-> ctlabel->setPixmap(fix);
+    QImage movingImage =loadTIFFImage(ui->lineMovingImage->text());
+    saveMHDall(movingImage, temp+"movingImageOrg.raw");
+    movFormat=movingImage.format();
+    saveSettings();
+
+    dispPixie(fixedImage,0);
+    dispPixie(movingImage,1);
 
     fixedImage = scale(fixedImage);
-    movingImage = scale (movingImage);
+    movingImage = scale(movingImage);
 
     saveMHDall(fixedImage, temp + "scaledFixed.raw");
     saveMHDall(movingImage, temp + "scaledMoving.raw");
+
+    if (fixFormat==13 | movFormat==13)
+        colorCheck().exec();
+
+    //display image for transformation on the right side
+    QImage disp1= loadMHD(temp+"scaledFixed");
+    dispPixie(disp1,0);
+    QImage disp2= loadMHD(temp+"scaledMoving");
+    dispPixie(disp2,1);
+
+    if (ui->rotBox->isChecked())
+        doFourierMellin();
+
+
     run_elastix();
 
 
@@ -189,9 +203,11 @@ void fuxlastix::fertigSlot()
 {
     ui->textBrowser->append("FERTIG");
     change_nr(temp +"TransformParameters.0.txt");
-    QImage colorImage =loadTIFFImage(ui->lineMovingColour->text());
+   // QImage colorImage =loadTIFFImage(ui->lineMovingColour->text());
+    QImage colorImage = loadMHD(temp+"movingImageOrg");
     QList<QImage> splitList;
     splitList=split(colorImage);
+
     saveMHDall(splitList[0], temp+"red.raw");
     saveMHDall(splitList[1], temp+"green.raw");
     saveMHDall(splitList[2], temp+"blue.raw");
@@ -220,14 +236,7 @@ void fuxlastix::ganzfertigSlot()
             transformixCount=0;
             QImage final = merge(temp);
             saveMHDall(final, temp + "finalImage.raw");
-            check2 = final;
-            QPixmap p;
-            p.convertFromImage(final);
-            if (p.width()>p.height())
-            p=p.scaledToWidth(500);
-            else
-            p=p.scaledToHeight(500);
-            ui-> histolabel->setPixmap(p);
+            dispPixie(final,1);
             copy_remove();
 
             break;
@@ -342,12 +351,12 @@ QImage fuxlastix::loadTIFFImage(const QString& fname)
 
         // get min max for conversion to 16bit
 
-        //quint16 *pU16Buffer =(quint16*)_TIFFmalloc(imageWidth*imageLength*2);
         quint16 *pU16Buffer = new quint16[imageWidth*imageLength*2];
 
 
             switch (dt) {
-            case bit32:      for (unsigned long i=0;i<_size;++i)
+            case bit32:
+                for (unsigned long i=0;i<_size;++i)
                                 pU16Buffer[i]=(((float*)pBuffer)[i]-_minGVal)*65535.0f/(_maxGVal-_minGVal);
                                 img = QImage((uchar*)pU16Buffer,imageWidth,imageLength,QImage::Format_Grayscale16,myImageCleanupHandler,pU16Buffer);
                              break;
@@ -366,8 +375,7 @@ QImage fuxlastix::loadTIFFImage(const QString& fname)
                     }
                 img=local16;
             }
-
-            break;
+                break;
 
             case RGB24:
             {
@@ -380,12 +388,9 @@ QImage fuxlastix::loadTIFFImage(const QString& fname)
                         *((unsigned char*)(local24.scanLine(y)+x))=val;
                     }
                  img=local24;
-               /*uchar * colorbuffer = new uchar[imageWidth*imageLength*3];
-                            memcpy(colorbuffer,pBuffer,imageWidth*imageLength*3);
-                            img = QImage(colorbuffer,imageWidth,imageLength,QImage::Format_RGB888);*/
-
             }
                 break;
+
             case bit8:
             {
                 QImage localImg(imageWidth,imageLength,QImage::Format_Grayscale16);
@@ -416,8 +421,9 @@ QImage fuxlastix::scale(QImage img)
     ui->textBrowser->append(QString ("%1").arg(info));
 
     QImage Img = img;
+    int type = img.format();
     QImage scaledImg = Img.scaled(Img.width()/10, Img.height()/10, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-    scaledImg = scaledImg.convertToFormat(QImage::Format_Grayscale16);
+    scaledImg = scaledImg.convertToFormat(QImage::Format(type));
     int info2= scaledImg.format();
     ui->textBrowser->append(QString ("%1").arg(info2));
 
@@ -531,61 +537,6 @@ QList<QImage> fuxlastix::split(QImage img)
 }
 
 
-void fuxlastix::saveMHDscaled(const QImage& img, const QString& fname)
-{
-    QFile f(fname);
-    if (f.open(QFile::WriteOnly))
-    {
-        QDataStream stream (&f);
-        stream.writeRawData((const char*) img.bits(), img.sizeInBytes());
-        f.close();
-    }
-
-    QFileInfo info(fname);
-    QFile ft(info.absolutePath()+"/"+info.baseName()+".mhd");
-    if (ft.open(QFile::WriteOnly))
-    {
-        QTextStream t(&ft);
-        t << "ObjectType = Image" << endl;
-        t << "NDims = 2" << endl;
-        t << "BinaryData = True" << endl;
-        t << "BinaryDataByteOrderMSB = True" << endl;
-        t << "DimSize = " <<img.width() <<" " <<img.height() << endl;
-        t << "ElementSize = 1.0 1.0" << endl;
-        t << "ElementType = MET_SHORT" << endl;
-        t << "ElementDataFile = " <<info.fileName() <<endl;
-        ft.close();
-    }
-}
-// saves QImage as .mhd
-// NOTUSED
-void fuxlastix::saveMHD(const QImage& l , const QString& fname)
-{
-    QFile f(fname);
-    if (f.open(QFile::WriteOnly))
-    {
-        QDataStream stream (&f);
-        stream.writeRawData((const char*) l.bits(), l.sizeInBytes());
-        f.close();
-    }
-
-    QFileInfo info(fname);
-    QFile ft(info.absolutePath()+"/"+info.baseName()+".mhd");
-    if (ft.open(QFile::WriteOnly))
-    {
-        QTextStream t(&ft);
-        t << "ObjectType = Image" << endl;
-        t << "NDims = 2" << endl;
-        t << "BinaryData = True" << endl;
-        t << "BinaryDataByteOrderMSB = True" << endl;
-        t << "DimSize = " <<l.width() <<" " <<l.height() << endl;
-        t << "ElementSize = 0.1 0.1" << endl;
-        t << "ElementType = MET_UCHAR" << endl;
-        t << "ElementDataFile = " <<info.fileName() <<endl;
-        ft.close();
-    }
-}
-
 void fuxlastix::run_transformix(const QString& image)
 {
     QString const program = "/bin/transformix";
@@ -698,7 +649,7 @@ void fuxlastix::saveMHDall(const QImage& img, const QString& filename)
             t << "ObjectType = Image" << endl;
             t << "NDims = 2" << endl;
             t << "BinaryData = True" << endl;
-            t << "BinaryDataByteOrderMSB = True" << endl;
+            t << "BinaryDataByteOrderMSB = False" << endl; //ENDIAN
             t << "DimSize = " <<img.width() <<" " <<img.height() << endl;
             t << "ElementSize = 1.0 1.0" << endl;
             t << "ElementType = MET_USHORT" << endl;
@@ -832,6 +783,10 @@ void fuxlastix::on_pickTempButton_clicked()
 //creates checkerboard pattern
 void fuxlastix::on_checkerButton_clicked()
 {
+    QImage check1 = loadMHD(resPath+"fixedImageOrg");
+    QImage check2 = loadMHD(resPath+"finalImage");
+    int chsize = ui->spinBox->value();
+
     if (check1.width() > 0 && check2.width()>0)
     {
 
@@ -840,46 +795,265 @@ void fuxlastix::on_checkerButton_clicked()
         check2=check2.scaledToWidth(check1.width(),Qt::SmoothTransformation);
         QImage result (check1.width(), check1.height(), QImage::Format_RGB888);
 
-        result = makeCheck(result);
+        result = check1;
+        QPainter pain(&result);
+        int countx=check1.width()/chsize;
+        int county=check1.height()/chsize;
 
-    result2=result;
+        for (int y=0;y<county;++y)
+            for (int x=0;x<countx;++x)
+                if ((x+y)%2==0)
+                    pain.drawImage(QRectF(x*chsize,y*chsize,chsize,chsize),check2,QRectF(x*chsize,y*chsize,chsize,chsize));
 
-       QPixmap checkpix;
+        pain.end();
+        result.save(resPath+"check.png");
 
-       checkpix.convertFromImage(result);
-       if (result.width() > result.height())
-       checkpix=checkpix.scaledToWidth(500);
-       else
-       checkpix=checkpix.scaledToHeight(500);
-
-
-       ui->ctlabel->setPixmap(checkpix);
-       //
+       dispPixie(result,0);
     }
     else
         QMessageBox::warning(0,"Warning","Run Elastix first");
 }
 
 
-QImage fuxlastix::makeCheck( QImage result)
-{
-
-    int chsize = ui->spinBox->value();
-    result=check1;
-    QPainter pain(&result);
-    int countx=check1.width()/chsize;
-    int county=check1.height()/chsize;
-
-    for (int y=0;y<county;++y)
-        for (int x=0;x<countx;++x)
-            if ((x+y)%2==0)
-                pain.drawImage(QRectF(x*chsize,y*chsize,chsize,chsize),check2,QRectF(x*chsize,y*chsize,chsize,chsize));
-
-    pain.end();
-    return result;
-}
 
 void fuxlastix::on_saveCheckerButton_clicked()
 {
-    saveMHDall(result2, ui->lineOutputDir->text()+"/checker.raw");
+    saveMHDall(result2, ui->lineOutputDir->text()+"checker.raw");
+
+}
+
+void fuxlastix::on_gridButton_clicked()
+{
+    gridcalc().exec();
+}
+
+QImage fuxlastix::loadMHD (QString name)
+{
+    QFile Mhd (name+".mhd");
+    long long width =0;
+    long long height=0;
+    bool _big = false;
+    QString mhdFormat;
+    if(!Mhd.open(QFile::ReadOnly))
+        QMessageBox::warning(this,"","Could  not load mhd file");
+    else
+    {
+        QTextStream text(&Mhd);
+        while(!Mhd.atEnd())
+        {
+            QString line;
+            line = Mhd.readLine();
+            if(line.contains("DimSize = "))
+            {
+               width = line.section(" = ",1,1).section(" ",0,0).toInt();
+               height = line.section(" = ",1,1).section(" ",1,1).toInt();
+            }
+            if (line.contains("ElementType"))
+            {
+                mhdFormat = line.section(" = ",1,1);
+            }
+            if (line.contains("BinaryDataByteOrderMSB"))
+            {
+                _big = line.section(" = ",1,1).toLower().contains("true");
+            }
+        }
+    }
+
+    QFile raw (name+".raw");
+    if (!raw.open(QFile::ReadOnly))
+        QMessageBox::warning(this,"","Could  not load raw file");
+    else
+    {
+        const char* pattern[]={"MET_UCHAR","MET_USHORT","MET_FLOAT","MET_UCHAR_ARRAY"};
+        int formatId=-1;
+        for (int i=0;i<4;++i)
+            if (mhdFormat.contains(pattern[i])) formatId=i;
+
+        QDataStream r(&raw);
+        r.setByteOrder(_big ? QDataStream::BigEndian : QDataStream::LittleEndian);
+
+        switch (formatId) {
+        case MET_UCHAR:
+            //8bit grayvalue;
+            {
+                uchar* buf=(uchar*)malloc(width*height);
+                r.readRawData((char*)buf,raw.size());
+                    QImage out(width, height, QImage::Format_Grayscale8);
+                unsigned char val;
+                for (long y=0; y<height;y++)
+                    for (long x = 0;  x<width; x++)
+                    {
+                        val = (buf)[x+y*width];
+                        *((uchar*)(out.scanLine(y)+x))=val;
+                    }
+
+                raw.close();
+                free(buf);
+                return out;
+            }
+            break;
+
+        case MET_USHORT:
+            //16bit grayvalue;
+            {
+                ushort* buf=(ushort*)malloc(width*height*2);
+                for (long i=0;i<width*height;++i)
+                    r >> buf[i];
+
+                QImage out(width, height, QImage::Format_Grayscale16);
+                unsigned short val;
+                for (long y=0; y<height;y++)
+                    for (long x = 0;  x<width; x++)
+                    {
+                        val = (buf)[x+y*width];
+                        *((ushort*)(out.scanLine(y)+x*2))=val;
+                    }
+
+                raw.close();
+                free(buf);
+                return out;
+            }
+            break;
+
+        case MET_FLOAT:
+            //32bit grayvalue;
+            {
+                float _minGVal,_maxGVal;
+                float bufsize= width*height*sizeof(float);
+                QImage out(width, height, QImage::Format_Grayscale16);
+                ushort *buf16= (ushort*)malloc(width*height*2);
+                float* buf=(float*)malloc(bufsize);
+                r.readRawData((char*)buf,raw.size());
+
+                _minGVal=_maxGVal=buf[0];
+
+                for (long x=0;x<width*height;++x)
+                {
+                    _minGVal = std::min(_minGVal,buf[x]);
+                    _maxGVal = std::max(_maxGVal,buf[x]);
+                }
+
+                for (long long i=0;i<width*height;++i)
+                    buf16[i]=(((float*)buf)[i]-_minGVal)*65535.0f/(_maxGVal-_minGVal);
+                    out = QImage((uchar*)buf16,width,height,QImage::Format_Grayscale16);
+
+                    raw.close();
+                    free(buf);
+                    return out;
+            }
+            break;
+        case MET_UCHAR_ARRAY:
+            //RGB COLOR (8bit per channel);
+            {
+                uchar* buf=(uchar*)malloc(width*height*3);
+                r.readRawData((char*)buf,raw.size());
+
+                QImage out(width, height, QImage::Format_RGB888);
+                unsigned char val;
+                for (long y=0; y<height;y++)
+                    for (long x = 0;  x<width*3; x++)
+                    {
+                        val = (buf)[x+y*width*3];
+                        *((uchar*)(out.scanLine(y)+x))=val;
+                    }
+
+                raw.close();
+                free(buf);
+                return out;
+                break;
+            }
+        }
+    return QImage();
+    }
+}
+
+void fuxlastix::doFourierMellin()
+{
+    QImage i2=loadMHD(temp+"FixedFM");
+    QImage i1=loadMHD(temp+"MovingFM");
+    QImage i2fm=i2;
+    QImage i1fm=i2;
+    long mx, my;
+    long ofx, ofy;
+
+    i1=  callFM.Corr(i1, i1, mx, my, ofx, ofy);
+    i2 = callFM.Corr(i2, i2, mx, my, ofx, ofy);
+    i1 = callFM.polarImage(i1, i1.width(), i1.height());
+    i2 = callFM.polarImage(i2,i2.width(),i2.height());
+    i2 = callFM.Corr(i1,i2, mx, my, ofx, ofy);
+    float rot= +(360.0f/(float)i2.width()*(float)ofx);
+    if (fabs(rot)>0.0001)
+    {
+        ui->textBrowser->append("rotation angle detected: "+QString ("%1").arg(rot));
+        QTransform t;
+        i2fm=i2fm.transformed(t.rotate(rot),Qt::SmoothTransformation);
+        for (int w =0; w<i2fm.width(); w++)
+            for(int h=0; h<i2fm.height();h++)
+            {
+                if((i2fm.pixelColor(w,h)).alpha()==0)
+                    i2fm.setPixel(w,h,qRgb(255,255,255));
+            }
+        i2fm=i2fm.convertToFormat(QImage::Format_Grayscale16);
+        i2fm=i2fm.copy(i2fm.width()/2-i1fm.width()/2,i2fm.height()/2-i1fm.height()/2, i1fm.width(), i1fm.height());
+    }
+    //saveMHDall(i2fm, temp + "scaledMoving.raw");
+
+    i1fm=callFM.Corr(i1fm,i2fm,mx,my, ofx, ofy);
+    QImage tra(i2fm.width(),i2fm.height(), QImage::Format_Grayscale16);
+    tra.fill(qRgb(255,255,255));
+    for(int wi=0; wi<i2fm.width();wi++)
+        for(int hi=0; hi<i2fm.height();hi++)
+        {
+           if((wi+ofx)>-1 && (wi+ofx)<tra.width() && (hi+ofy)>-1 && (hi+ofy)<tra.height())
+               tra.setPixel(wi+ofx,hi+ofy,i2fm.pixel(wi,hi));
+        }
+    saveMHDall(tra, temp + "scaledFixed.raw");
+    dispPixie(tra,0);
+
+    //and rotate and transform the original big image
+    QImage kFI = loadMHD(temp+"FixedImageOrg");
+    if (fabs(rot)>0.0001)
+    {
+        QTransform t;
+        kFI=kFI.transformed(t.rotate(rot),Qt::SmoothTransformation);
+        for (int w =0; w<kFI.width(); w++)
+            for(int h=0; h<kFI.height();h++)
+            {
+                if((kFI.pixelColor(w,h)).alpha()==0)
+                    kFI.setPixel(w,h,qRgb(255,255,255));
+            }
+        kFI=kFI.convertToFormat(QImage::Format_Grayscale16);
+        kFI=kFI.copy(kFI.width()/2-i1fm.width()*10/2,kFI.height()/2-i1fm.height()*10/2, i1fm.width()*10, i1fm.height()*10);
+
+    }
+
+    QImage tra2(kFI.width(),kFI.height(), QImage::Format_Grayscale16);
+    tra2.fill(qRgb(255,255,255));
+    for(int wi=0; wi<kFI.width();wi++)
+        for(int hi=0; hi<kFI.height();hi++)
+        {
+           if((wi+ofx*10)>-1 && (wi+ofx*10)<tra2.width() && (hi+ofy*10)>-1 && (hi+ofy*10)<tra2.height())
+               tra2.setPixel(wi+ofx*10,hi+ofy*10,kFI.pixel(wi,hi));
+        }
+    dispPixie(tra2,1);
+    saveMHDall(tra2, temp + "fixedImageOrg.raw");
+
+}
+
+void fuxlastix::dispPixie(QImage input, int side)
+{
+  QPixmap pix;
+  pix.convertFromImage(input);
+  if (input.width()>input.height())
+      pix=pix.scaledToWidth(500);
+  else
+      pix=pix.scaledToHeight(500);
+
+  if (side == 0)
+      ui->ctlabel->setPixmap(pix);
+  else if (side == 1)
+      ui->histolabel->setPixmap(pix);
+  else
+      QMessageBox::warning(0,"WRONG","wrong side!");
+
 }
