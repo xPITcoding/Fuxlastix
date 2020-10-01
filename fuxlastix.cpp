@@ -259,22 +259,35 @@ QImage fuxlastix::loadTIFFImage(const QString& fname)
 
     emit MSG(QString("Loading ... %1").arg(fname));
     const char* _fileName = fname.toLatin1().constData();
+
+    QFile f(fname);
+    f.open(QFile::ReadOnly);
+    QDataStream d(&f);
+    quint16 _header;
+    bool _little=true;
+    d >> _header;
+    f.close();
+    _little = _header == TIFF_LITTLEENDIAN;
+
+
     TIFF *tif = TIFFOpen(_fileName,"r");
     if (tif)
     {
         uint32 imageWidth, imageLength;
         short bitsPerPixel;
+        short samplesPerPixel;
         uint32 row;
         uint64 offset;
         tdata_t buf;    
         short type;
         long sizeOfDatatype;
 
-
         TIFFGetField(tif,TIFFTAG_IMAGEWIDTH,&imageWidth);
         TIFFGetField(tif,TIFFTAG_IMAGELENGTH,&imageLength);
         TIFFGetField(tif,TIFFTAG_PHOTOMETRIC,&type);
         TIFFGetField(tif,TIFFTAG_BITSPERSAMPLE,&bitsPerPixel);
+        TIFFGetField(tif,TIFFTAG_SAMPLESPERPIXEL,&samplesPerPixel);
+
         sizeOfDatatype=bitsPerPixel/8;
 
         if (type==PHOTOMETRIC_RGB)
@@ -370,7 +383,7 @@ QImage fuxlastix::loadTIFFImage(const QString& fname)
                     {
                         hbyte=((unsigned char*)pBuffer)[x*2+y*imageWidth*2];
                         lbyte=((unsigned char*)pBuffer)[x*2+1+y*imageWidth*2];
-                        val = hbyte << 8 | lbyte;
+                        _little ? val = hbyte << 8 | lbyte : val = lbyte << 8 | hbyte;
                         *((unsigned short*)(local16.scanLine(y)+x*2))=val;
                     }
                 img=local16;
@@ -783,6 +796,7 @@ void fuxlastix::on_pickTempButton_clicked()
 //creates checkerboard pattern
 void fuxlastix::on_checkerButton_clicked()
 {
+    resPath=ui->lineOutputDir->text()+"/";
     QImage check1 = loadMHD(resPath+"fixedImageOrg");
     QImage check2 = loadMHD(resPath+"finalImage");
     int chsize = ui->spinBox->value();
