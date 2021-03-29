@@ -16,50 +16,40 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    ../../Fuxlastix/alglib/src/alglibinternal.cpp \
-    ../../Fuxlastix/alglib/src/alglibmisc.cpp \
-    ../../Fuxlastix/alglib/src/ap.cpp \
-    ../../Fuxlastix/alglib/src/dataanalysis.cpp \
-    ../../Fuxlastix/alglib/src/diffequations.cpp \
-    ../../Fuxlastix/alglib/src/fasttransforms.cpp \
-    ../../Fuxlastix/alglib/src/integration.cpp \
-    ../../Fuxlastix/alglib/src/interpolation.cpp \
-    ../../Fuxlastix/alglib/src/linalg.cpp \
-    ../../Fuxlastix/alglib/src/optimization.cpp \
-    ../../Fuxlastix/alglib/src/solvers.cpp \
-    ../../Fuxlastix/alglib/src/specialfunctions.cpp \
-    ../../Fuxlastix/alglib/src/statistics.cpp \
-    colorcheck.cpp \
+    alglibinternal.cpp \
+    alglibmisc.cpp \
+    ap.cpp \
+    definepathdlg.cpp \
+    fasttransforms.cpp \
     foumel.cpp \
+    fuxlastix.cpp \
     gridcalc.cpp \
+    linalg.cpp \
     main.cpp \
-    fuxlastix.cpp
+    previewdialog.cpp \
+    tool_functions.cpp
 
 HEADERS += \
-    ../../Fuxlastix/alglib/src/alglibinternal.h \
-    ../../Fuxlastix/alglib/src/alglibmisc.h \
-    ../../Fuxlastix/alglib/src/ap.h \
-    ../../Fuxlastix/alglib/src/dataanalysis.h \
-    ../../Fuxlastix/alglib/src/diffequations.h \
-    ../../Fuxlastix/alglib/src/fasttransforms.h \
-    ../../Fuxlastix/alglib/src/integration.h \
-    ../../Fuxlastix/alglib/src/interpolation.h \
-    ../../Fuxlastix/alglib/src/linalg.h \
-    ../../Fuxlastix/alglib/src/optimization.h \
-    ../../Fuxlastix/alglib/src/solvers.h \
-    ../../Fuxlastix/alglib/src/specialfunctions.h \
-    ../../Fuxlastix/alglib/src/statistics.h \
-    ../../Fuxlastix/alglib/src/stdafx.h \
-    colorcheck.h \
+    alglibinternal.h \
+    alglibmisc.h \
+    ap.h \
+    definepathdlg.h \
+    previewdialog.h \
+    stdafx.h \
+    fasttransforms.h \
     foumel.h \
     fuxlastix.h \
-    gridcalc.h
+    gridcalc.h \
+    linalg.h \
+    tool_functions.h
+
 
 FORMS += \
-    colorcheck.ui \
+    definepathdlg.ui \
     foumel.ui \
     fuxlastix.ui \
-    gridcalc.ui
+    gridcalc.ui \
+    previewdialog.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -67,11 +57,18 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 RESOURCES += \
+    Fuxlastix.qrc \
     Fuxlastix.qrc
 
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../../../usr/local/lib/release/ -ltiff
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../../../usr/local/lib/debug/ -ltiff
-else:unix: LIBS += -L$$PWD/../../../../usr/local/lib/ -ltiff
 
-INCLUDEPATH += $$PWD/../../../../usr/local/include
-DEPENDPATH += $$PWD/../../../../usr/local/include
+DISTFILES += \
+    Fuxlastix.pro.user \
+    Fuxlastix.pro.user.0915135 \
+    Fuxlastix.pro.user.ed0e666 \
+    fuxlastix_logo.png \
+    libANNlib-5.0.so \
+    libANNlib-5.0.so.1 \
+    logo.png
+
+
+

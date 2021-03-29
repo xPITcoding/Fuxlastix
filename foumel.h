@@ -3,8 +3,8 @@
 
 #include <QDialog>
 #include <QMatrix3x3>
-#include "../../Fuxlastix/alglib/src/linalg.h"
-#include "../../Fuxlastix/alglib/src/fasttransforms.h"
+#include "linalg.h"
+#include "fasttransforms.h"
 
 using namespace alglib;
 
@@ -35,6 +35,10 @@ public:
     QImage createImg (real_2d_array *, const long&, const long&, long&, long&, long&, long&);
     QImage polarImage(const QImage&,const int&,const int&);
     QImage Corr(QImage, QImage, long&, long&, long&, long&);
+    QImage fixedPreKern, movingPreKernFM, movingPreKern;
+    float rot;
+    long mx, my;
+    long ofx, ofy;
 
 private:
     Ui::fouMel *ui;
