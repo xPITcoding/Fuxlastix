@@ -1,6 +1,0 @@
-/home/jonas/Desktop/test/test2/ctin.tif
-/home/jonas/Desktop/test/test2/hein.tif
-/home/jonas/Desktop/test/test2/heCintif.tif
-/home/jonas/Desktop/test/test2/results
-/home/jonas/Software/linuxshell_a/p20.txt
-/home/jonas/Software/fuxlastix_temp
