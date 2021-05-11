@@ -4,41 +4,8 @@
 #include <QDialog>
 #include "fuxlastix.h"
 #include <QList>
-
-class U16Image : public QImage
-{
-public:
-    U16Image(const uchar*b,int w,int h):QImage(b,w,h,QImage::Format_Grayscale16){}
-    U16Image(const float*b,int w,int h):QImage(w,h,QImage::Format_Grayscale16){
-       for(long x=0; x<w; x++)
-           for(long y=0; y<h; y++)
-           {
-               setPixel(x,y,b[x+y*w]);
-           }
-    }
-    quint16 pixel(int x,int y)
-    {
-        return ((quint16*)scanLine(y))[x];
-    }
-    void setPixel(int x,int y,quint16 val)
-    {
-        ((quint16*)scanLine(y))[x]=val;
-    }
-};
-class S16Image : public QImage
-{
-public:
-    S16Image(const uchar*b,int w,int h):QImage(b,w,h,QImage::Format_Grayscale16){}
-    qint16 pixel(int x,int y)
-    {
-        return ((qint16*)scanLine(y))[x];
-    }
-    void setPixel(int x,int y,qint16 val)
-    {
-        ((qint16*)scanLine(y))[x]=val;
-    }
-};
-
+#include "tool_functions.h"
+class fuxlastix;
 namespace Ui {
 class gridcalc;
 }
@@ -48,45 +15,58 @@ class gridcalc : public QDialog
     Q_OBJECT
 
 public:
-    explicit gridcalc(QWidget *parent = nullptr);
+     gridcalc(fuxlastix*);
     ~gridcalc();
 
 private slots:
     void run_transformix(const QString&);
     void run_transformixP(const QString&);
+    void run_transformixP2(const QString& input);
+
+    void transformixDone();
+    void transformixDone2();
     void on_closeButton_clicked();
-    void on_makeGridButton_clicked();
     void on_pointButton_clicked();
-
-
-
-    void on_readPButton_clicked();
-
-    void on_preTriangleButton_clicked();
-
-    void on_postTriangleButton_clicked();
-
-    void on_compAreaButton_clicked();
-    
-    void on_pushButton_clicked();
+ //   void on_readPButton_clicked();
+ //   void on_preTriangleButton_clicked();
+ //   void on_postTriangleButton_clicked();
+    void on_transformButton_clicked();
+    void on_jacobianButton_clicked();
+    QList<QColor> createColorCircle();
+    void on_TrafoPicButton_clicked();
+    void on_pshowColCir_clicked();
 
 private:
     Ui::gridcalc *ui;
+    fuxlastix* pRef= nullptr;
     QProcess *runTransformix = nullptr;
+    QProcess *runTransformix2 = nullptr;
     void saveMHDall (const QImage&, const QString&);
     QImage loadMHD(QString);
-    QImage loadMHD16(QString);
+    QImage loadJacobianMHD(QString);
+    mhdFormats type;
     dataType dt;
     QString temp="";
     void loadSettings();
-    float* loadMHDraw32to32(QString name);
-    ushort* loadMHDraw32to16(QString name);
-    ushort* loadMHDraw16to16(QString name);
-    void regionGrowing(U16Image bild, QString output);
+
     QList<int>getWH(QString name);
-    void point_list();
-    void read_points();
+    void point_list(QImage);
+    QImage read_points(QImage);
     void triangleCalc(QString);
+    QImage DrawPoints(QImage Input);
+    QImage DrawGrid(QImage Input);
+    QImage MergeGrid(QImage Img, QImage Grid);
+    void DispPixie(QImage Input);
+    QImage makeBinary(QImage Input);
+    void CreateAllPoints(QImage);
+    QList<QList<QPointF>> CreateDeformationList();
+    QImage drawColorWheel(QList<QColor>);
+    void DispColorWheel(QImage Input);
+    float getmaxmagnitude(QList<QPointF>);
+    inline QColor getRGBA(QPointF, QList<QColor>, float);
+    QImage drawColorWheelRound(QList<QColor>);
+
+
 };
 
 #endif // GRIDCALC_H

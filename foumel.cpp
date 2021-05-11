@@ -116,7 +116,7 @@ QImage fouMel::flipImg (QImage in)
 QImage fouMel::createImg (real_2d_array *data, const long& width, const long& height, long& max_pos_x, long& max_pos_y, long& offsetx, long& offsety)
 {
 
-    unsigned short* buffer = (unsigned short*)malloc(width*height*sizeof(short));
+    unsigned short* buffer = (unsigned short*)malloc(width*height*sizeof(unsigned short));
     memset(buffer,0,width*height*sizeof(short));
 
     // get min max
@@ -161,8 +161,8 @@ QImage fouMel::createImg (real_2d_array *data, const long& width, const long& he
                 maxres=buffer[i+j*width];
             }
     */
-    max_pos_x>width/2 ? offsetx = width - max_pos_x -1 : offsetx = max_pos_x;
-    max_pos_y>height/2 ? offsety = height - max_pos_y -1 : offsety = max_pos_y;
+    max_pos_x>width/2 ? offsetx = max_pos_x-width : offsetx = max_pos_x;
+    max_pos_y>height/2 ? offsety = max_pos_y-height  : offsety = max_pos_y;
     cout << "offset from centre x " <<offsetx <<endl;
     cout << "offset  from centre y " << offsety <<endl;
     //cout <<"new x" <<posx <<endl;
@@ -174,6 +174,7 @@ QImage fouMel::createImg (real_2d_array *data, const long& width, const long& he
 
     return res;
 }
+
 QImage fouMel::polarImage(const QImage& src,const int& width,const int& height)
 
 {
@@ -276,7 +277,7 @@ QImage fouMel::Corr(QImage in1, QImage in2, long& mx, long& my, long& ofx, long&
 
 
     QImage out = createImg(result,fft1->cols(),fft1->rows(),mx,my, ofx, ofy); // autocorr
-    out.save("/home/jonas/Desktop/ffft2.png"); // ifft
+
     cout <<"corr x "<< mx <<endl;
     cout << "corr y " <<my <<endl;
     cout <<"end function" <<endl;

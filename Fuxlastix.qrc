@@ -2,6 +2,6 @@
     <qresource prefix="/img">
         <file>logo.png</file>
         <file>fuxlastix_logo.png</file>
-        <file>check500.png</file>
+        <file>FM_mask.png</file>
     </qresource>
 </RCC>
